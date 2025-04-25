@@ -5,6 +5,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
 
+//handle enviroment
 public interface PostRepository extends MongoRepository<Post, String> {
     List<Post> findByUserId(String userId);
 }

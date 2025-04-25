@@ -12,7 +12,7 @@ public class Post {
     private String userId;
     private String title;
     private String content;
-    private String imageUrl;
+    private String imageUrl; // image not compulsary
     private LocalDateTime createdAt;
     private int likeCount; // New field for like count
 
