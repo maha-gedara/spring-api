@@ -11,7 +11,7 @@ import java.util.UUID;
 
 @Service
 public class CommentService {
-
+//all the logics here
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
 
