@@ -6,17 +6,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
-import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
-import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.UUID;
-
 @Service
-public class UserService extends OidcUserService implements UserDetailsService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -26,49 +19,33 @@ public class UserService extends OidcUserService implements UserDetailsService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User signup(String email, String name, String password) {
-        if (userRepository.findByEmail(email).isPresent()) {
-            throw new RuntimeException("Email already exists");
-        }
-        User user = new User();
-        user.setId(UUID.randomUUID().toString());
-        user.setEmail(email);
-        user.setName(name);
-        user.setPassword(passwordEncoder.encode(password));
-        user.setPicture(null);
-        return userRepository.save(user);
-    }
-
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+        System.out.println("Attempting to load user with email: " + email);
+        User user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> {
+                    System.out.println("User not found: " + email);
+                    return new UsernameNotFoundException("User not found with email: " + email);
+                });
+        System.out.println("User found: " + user.getEmail() + ", password: " + user.getPassword());
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())
-                .authorities("USER")
+                .roles("USER")
                 .build();
     }
 
-    @Override
-    public OidcUser loadUser(OidcUserRequest userRequest) {
-        OidcUser oidcUser = super.loadUser(userRequest);
-        Map<String, Object> attributes = oidcUser.getAttributes();
-
-        String email = (String) attributes.get("email");
-        String name = (String) attributes.get("name");
-        String picture = (String) attributes.getOrDefault("picture", null);
-
-        User user = userRepository.findByEmail(email)
-                .orElseGet(() -> {
-                    User newUser = new User();
-                    newUser.setId(UUID.randomUUID().toString());
-                    newUser.setEmail(email);
-                    newUser.setName(name);
-                    newUser.setPicture(picture);
-                    return userRepository.save(newUser);
-                });
-
-        return new DefaultOidcUser(oidcUser.getAuthorities(), oidcUser.getIdToken(), oidcUser.getUserInfo());
+    public User signup(String email, String name, String password) {
+        System.out.println("Attempting to signup user: " + email);
+        if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
+            System.out.println("Email already exists: " + email);
+            throw new RuntimeException("Email already exists");
+        }
+        User user = new User();
+        user.setEmail(email);
+        user.setName(name);
+        user.setPassword(passwordEncoder.encode(password));
+        System.out.println("Creating user: " + email + ", encoded password: " + user.getPassword());
+        return userRepository.save(user);
     }
 }
