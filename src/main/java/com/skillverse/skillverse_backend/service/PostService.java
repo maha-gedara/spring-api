@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+//containing all the logics
 @Service
 public class PostService {
 
@@ -51,19 +52,23 @@ public class PostService {
         return postRepository.save(post);
     }
 
+    //Get all posts
     public List<Post> getAllPosts() {
         return postRepository.findAll();
     }
 
+    //Get a single post by its ID
     public Post getPostById(String id) {
         return postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
     }
 
+    //Get posts created by a specific user
     public List<Post> getPostsByUserId(String userId) {
         return postRepository.findByUserId(userId);
     }
 
+    //Update a post
     public Post updatePost(String id, String userId, String title, String content, MultipartFile image) throws IOException {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
@@ -75,13 +80,15 @@ public class PostService {
         post.setTitle(title);
         post.setContent(content);
 
+        //Update new image
         if (image != null && !image.isEmpty()) {
             if (post.getImageUrl() != null) {
                 String oldFileName = post.getImageUrl().substring(post.getImageUrl().lastIndexOf("/") + 1);
                 BlobId blobId = BlobId.of(bucketName, "posts/" + oldFileName);
-                storage.delete(blobId);
+                storage.delete(blobId); //remove old image
             }
 
+            //update new image
             String fileName = post.getId() + "_" + image.getOriginalFilename();
             BlobId blobId = BlobId.of(bucketName, "posts/" + fileName);
             BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType(image.getContentType()).build();
@@ -93,21 +100,24 @@ public class PostService {
         return postRepository.save(post);
     }
 
+    //Delete a post
     public void deletePost(String id, String userId) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Post not found with id: " + id));
 
+        //Only the owner can delete
         if (!post.getUserId().equals(userId)) {
             throw new RuntimeException("Unauthorized: You can only delete your own posts");
         }
 
+        //Delete image from cloud storage
         if (post.getImageUrl() != null) {
             String fileName = post.getImageUrl().substring(post.getImageUrl().lastIndexOf("/") + 1);
             BlobId blobId = BlobId.of(bucketName, "posts/" + fileName);
             storage.delete(blobId);
         }
 
-        postRepository.deleteById(id);
+        postRepository.deleteById(id); //Delete from database
     }
 
     public String toggleLike(String postId, String userId) {
@@ -119,7 +129,7 @@ public class PostService {
         if (existingLike.isPresent()) {
             // User has already liked, so unlike
             likeRepository.delete(existingLike.get());
-            post.setLikeCount(post.getLikeCount() - 1);
+            post.setLikeCount(post.getLikeCount() - 1);  // Decrease like count
             postRepository.save(post);
             return "Post unliked successfully";
         } else {
@@ -129,7 +139,7 @@ public class PostService {
             like.setPostId(postId);
             like.setUserId(userId);
             likeRepository.save(like);
-            post.setLikeCount(post.getLikeCount() + 1);
+            post.setLikeCount(post.getLikeCount() + 1); // Increase like count
             postRepository.save(post);
             return "Post liked successfully";
         }
