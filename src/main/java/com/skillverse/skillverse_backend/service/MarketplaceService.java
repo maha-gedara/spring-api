@@ -19,7 +19,7 @@ public class MarketplaceService {
 
     private final MarketplaceRepository marketplaceRepository;
     private final Storage storage;
-    private final String bucketName = "skillverse-5f7bf.appspot.com";
+    private final String bucketName = "skillverse-5f7bf.firebasestorage.app";
 
     public MarketplaceService(MarketplaceRepository marketplaceRepository, Storage storage) {
         this.marketplaceRepository = marketplaceRepository;
