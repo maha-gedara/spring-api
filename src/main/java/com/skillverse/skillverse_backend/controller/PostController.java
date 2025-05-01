@@ -24,7 +24,7 @@ public class PostController {
     public PostController(PostService postService) {
         this.postService = postService;
     }
-
+// create post
     @PostMapping
     public ResponseEntity<Map<String, Object>> createPost(
             @RequestParam("title") String title,
@@ -48,7 +48,7 @@ public class PostController {
             return ResponseEntity.status(500).body(errorResponse);
         }
     }
-
+// get post
     @GetMapping
     public ResponseEntity<List<Post>> getAllPosts() {
         List<Post> posts = postService.getAllPosts();
